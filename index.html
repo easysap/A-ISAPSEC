@@ -25,7 +25,6 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   html { scroll-behavior: smooth; }
 
   body {
@@ -487,342 +486,218 @@
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════ HERO -->
 <header class="hero">
   <div class="hero-inner">
-    <div class="hero-tag">Architecture Deep Dive</div>
-    <h1>AI Integration with SAP Security: A Technical Guide</h1>
-    <p class="hero-sub">SAP systems generate more security-relevant data than most teams know what to do with. This is how you build a pipeline that actually uses it — from raw log extraction through to automated response.</p>
+    <div class="hero-tag">Comparative Evaluation</div>
+    <h1>Practical AI Integration for SAP Security</h1>
+    <p class="hero-sub">It is a reality that SAP systems produce more security data than most Basis teams can realistically handle. This guide shows how to bridge that gap using a modern data pipeline.</p>
     <div class="hero-meta">
       <div>Author <span>Sahar Guermah</span></div>
-      <div><span>SAP Security</span></div>
+      <div>Role <span>Security Architect</span></div>
+      <div>Read time <span>~12 min</span></div>
     </div>
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════════════ ARTICLE -->
 <div class="article-wrap">
 
-  <!-- TOC -->
   <nav class="toc">
-    <div class="toc-title">Contents</div>
+    <div class="toc-title">Guide Navigation</div>
     <ol>
-      <li><a href="#overview">Architecture overview</a></li>
-      <li><a href="#data-sources">SAP data sources</a></li>
-      <li><a href="#extraction">Extraction methods</a></li>
-      <li><a href="#processing">Data processing layer</a></li>
-      <li><a href="#models">AI model layer</a></li>
-      <li><a href="#siem">SIEM integration</a></li>
-      <li><a href="#response">Action &amp; response</a></li>
-      <li><a href="#architecture">Batch vs. streaming</a></li>
+      <li><a href="#overview">Architecture mindset</a></li>
+      <li><a href="#data-sources">Where logs live</a></li>
+      <li><a href="#extraction">Pulling the data</a></li>
+      <li><a href="#processing">The feature layer</a></li>
+      <li><a href="#models">Model selection</a></li>
+      <li><a href="#siem">SIEM workflows</a></li>
+      <li><a href="#response">Response strategies</a></li>
+      <li><a href="#architecture">Closing thoughts</a></li>
     </ol>
   </nav>
 
-  <!-- ── OVERVIEW ── -->
   <section id="overview">
     <div class="section-label">§ 01</div>
-    <h2>Architecture overview</h2>
-    <p>SAP environments produce a surprising amount of security-relevant data. Role assignments in <code>USR*</code>, audit events in <code>SM20</code>, transaction records in <code>STAD</code> — it's all there. Most organisations just aren't doing much with it. The logs age off, the role tables sit untouched, and the first sign of a problem is often a fraud investigation six months after the fact.</p>
-    <p>The architecture here is built around one rule: <strong>SAP is the data source, not the analysis platform</strong>. AI runs externally — in your data lake, your cloud environment, wherever you do ML — and the results go back into your SIEM. Nothing gets deployed into the SAP kernel. The production system stays clean.</p>
+    <h2>Architecture mindset</h2>
+    <p>The core philosophy here is quite simple: <strong>SAP is the source of truth, but not the place for heavy analytics.</strong> Trying to run intensive machine learning inside the ABAP stack is typically a bad idea for performance reasons. Instead, we extract that data to a specialized environment—a data lake or a cloud ML platform—and only send the high-value risk scores back into the security ecosystem.</p>
+    
+    <p>In my view, the benefit of this modular approach is that it respects the stability of the SAP core while allowing the security team to use modern tools like Python or Spark. This is how you reduce the MTTD without making the Basis team nervous about system resources.</p>
 
     <div class="flow-diagram">
-      <div class="flow-diagram-title">End-to-end data flow</div>
+      <div class="flow-diagram-title">Conceptual Architecture Flow</div>
       <div class="flow-nodes">
         <div class="flow-node node-sap">
-          <div class="flow-node-title">SAP Systems</div>
-          <div class="flow-node-sub">ECC / S/4HANA — logs, users, roles, transactions</div>
+          <div class="flow-node-title">SAP Core Layer</div>
+          <div class="flow-node-sub">Logs (Audit, Workload, Changes)</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-ext">
-          <div class="flow-node-title">Data Extraction Layer</div>
-          <div class="flow-node-sub">APIs · RFC · ETL · Kafka / Event Mesh</div>
+          <div class="flow-node-title">Extraction Pipeline</div>
+          <div class="flow-node-sub">OData, RFC, or Event Mesh</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-proc">
-          <div class="flow-node-title">Data Processing &amp; Feature Engineering</div>
-          <div class="flow-node-sub">Cleaning · normalisation · derived features</div>
+          <div class="flow-node-title">Feature Engineering</div>
+          <div class="flow-node-sub">Normalization & Data Cleansing</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-ai">
-          <div class="flow-node-title">AI Models Layer</div>
-          <div class="flow-node-sub">Anomaly · Risk · Sequence · Graph</div>
+          <div class="flow-node-title">AI & ML Models</div>
+          <div class="flow-node-sub">Anomaly Scoring & Risk Prediction</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-siem">
-          <div class="flow-node-title">Security Platforms (SIEM)</div>
-          <div class="flow-node-sub">Splunk · Microsoft Sentinel · IBM QRadar</div>
-        </div>
-        <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
-        <div class="flow-node node-action">
-          <div class="flow-node-title">Action &amp; Response Layer</div>
-          <div class="flow-node-sub">Alerts · GRC workflows · Automated lockouts</div>
+          <div class="flow-node-title">Incident Management</div>
+          <div class="flow-node-sub">SIEM / SOC Integration</div>
         </div>
       </div>
     </div>
-
-    <p>Each layer can be swapped out independently. Change from Splunk to Sentinel, or switch from a nightly ETL batch to Kafka streaming — the AI models don't care. The contracts between layers are simple: REST/OData out of SAP, feature vectors into the models, JSON risk scores into the SIEM. That's intentional. Don't let the integration complexity creep into the intelligence layer.</p>
   </section>
 
-  <!-- ── DATA SOURCES ── -->
   <section id="data-sources">
     <div class="section-label">§ 02</div>
-    <h2>SAP data sources</h2>
-    <p>Four table families inside SAP carry the signals that matter. Before you design anything, it's worth understanding what each one actually captures — and where it falls short.</p>
+    <h2>Where logs live</h2>
+    <p>Finding the right signal is usually half the battle. In the SAP universe, we look at four key areas that provide the richest context for security models.</p>
 
     <div class="layer-grid">
       <div class="layer-card">
-        <h4>User activity logs</h4>
-        <p>Workload Monitor tables <code>STAD</code> and <code>ST03N</code> record every dialog transaction a user runs: program name, T-code, runtime, CPU usage, step count. This is your main source for behavioural baselining — what does normal look like for this user, this role, this time of day.</p>
-        <p>One thing to watch: <code>STAD</code> retention defaults to 2–7 days in most systems. If you're not streaming or extracting it regularly, the data is gone.</p>
+        <h4>User behavior (STAD)</h4>
+        <p>The workload tables, <code>STAD</code> and <code>ST03N</code>, are essentially the fingerprints of activity. They record what T-codes were used and by whom. Establishing a "normal" baseline here is what makes anomaly detection actually work.</p>
         <div class="tag-list">
-          <span class="tag">STAD</span><span class="tag">ST03N</span><span class="tag">behavioural baseline</span>
+          <span class="tag">Behavioral Logs</span><span class="tag">Transaction History</span>
         </div>
       </div>
 
       <div class="layer-card terracotta">
-        <h4>Change document logs</h4>
-        <p>Tables <code>CDHDR</code> (header) and <code>CDPOS</code> (line items) track field-level changes to master data — vendor bank accounts, customer records, cost centre assignments, config settings. Who changed what, when, and from which value to which value.</p>
-        <p>In my experience, this is where the most interesting fraud signals live. A changed vendor IBAN that nobody flagged is a classic pattern.</p>
+        <h4>The Change Audit</h4>
+        <p>Tables like <code>CDHDR</code> and <code>CDPOS</code> track modifications to master data. If someone changes a vendor's bank details without a proper ticket, these tables are the only place that evidence lives. For fraud detection, these are non-negotiable.</p>
         <div class="tag-list">
-          <span class="tag terra">CDHDR</span><span class="tag terra">CDPOS</span><span class="tag terra">fraud detection</span>
+          <span class="tag terra">Change Documents</span><span class="tag terra">Master Data Integrity</span>
         </div>
       </div>
 
       <div class="layer-card marigold">
-        <h4>User &amp; role tables</h4>
-        <p>The <code>USR*</code> family covers user master records, logon data, and parameter assignments. <code>AGR_*</code> holds role definitions and authorization objects. Together they give you the full access graph — who has what, and how they got it.</p>
-        <p>This is your input for SoD analysis and graph-based privilege escalation detection. It's also the part that tends to be messiest in long-running SAP landscapes.</p>
+        <h4>Access Metadata</h4>
+        <p>The <code>USR*</code> and <code>AGR*</code> family of tables tell the story of "who can do what." We pull these to understand the authorization graph, which is vital for detecting if a user suddenly gains permissions they shouldn't have.</p>
         <div class="tag-list">
-          <span class="tag gold">USR02</span><span class="tag gold">USR04</span><span class="tag gold">AGR_USERS</span><span class="tag gold">AGR_1251</span>
+          <span class="tag gold">Roles & Profiles</span><span class="tag gold">SoD Analysis</span>
         </div>
       </div>
 
       <div class="layer-card">
-        <h4>Security audit log</h4>
-        <p>Transaction <code>SM20</code> reads the Security Audit Log — failed logins, RFC calls, report executions, user locks and unlocks. It has to be switched on per client in <code>SM19</code> with the right audit class filters. A lot of systems have it partially configured or off entirely. Worth verifying your own landscape before assuming the data is there.</p>
+        <h4>The Security Log (SM20)</h4>
+        <p>This is the classic audit log. It captures failed login attempts and sensitive RFC calls. One must remember to verify that the audit classes are actually turned on in <code>SM19</code>, otherwise, the model will be looking at an empty table.</p>
         <div class="tag-list">
-          <span class="tag">SM20</span><span class="tag">SM19</span><span class="tag">brute force</span><span class="tag">lateral movement</span>
+          <span class="tag">Security Audit Log</span><span class="tag">Brute Force Signaling</span>
         </div>
       </div>
     </div>
-
-    <div class="callout danger">
-      <div class="callout-label">Architecture note</div>
-      <p>Don't pull these tables directly via <code>SELECT *</code> using a highly privileged RFC user. Use purpose-built extraction function modules or OData services with minimum-privilege service accounts. Direct table access skips SAP's authorisation checks at the application layer — which is exactly the kind of thing this whole pipeline is meant to detect.</p>
-    </div>
   </section>
 
-  <!-- ── EXTRACTION ── -->
   <section id="extraction">
     <div class="section-label">§ 03</div>
-    <h2>Extraction methods</h2>
-    <p>There's no single right answer here — it depends on how much lag you can tolerate and what infrastructure you already have. Most real-world setups run two tracks: a nightly batch for bulk historical data, and a streaming path for the stuff you actually need in real time.</p>
-
-    <div class="layer-grid">
-      <div class="layer-card">
-        <h4>OData / REST APIs</h4>
-        <p>SAP Gateway exposes OData v2/v4 services for structured reads of user, role, and master data. S/4HANA ships many of these out-of-the-box via the API Business Hub. Good fit for scheduled pulls of slowly-changing data — role assignments, user master records — where a few hours of lag is fine.</p>
-        <div class="tag-list"><span class="tag">SAP Gateway</span><span class="tag">BTP</span><span class="tag">OData v4</span></div>
-      </div>
-
-      <div class="layer-card">
-        <h4>RFC connectors</h4>
-        <p>RFC calls invoke ABAP function modules directly over SAP's proprietary protocol. Libraries like <code>pyrfc</code> (Python), SAP JCo (Java), or SAP NCo (.NET) handle the transport layer. Useful when you need on-demand extraction or want to call a custom ABAP extractor that joins across several tables at once.</p>
-        <div class="tag-list"><span class="tag">pyrfc</span><span class="tag">SAP JCo</span><span class="tag">SAP NCo</span></div>
-      </div>
-
-      <div class="layer-card marigold">
-        <h4>ETL tools</h4>
-        <p>Informatica IDMC and SAP Data Services both ship certified SAP adapters built on top of the RFC layer, but they add scheduling, error handling, lineage tracking, and transformation logic on top. If you're doing bulk historical loads into a data lake, this is the path of least resistance.</p>
-        <div class="tag-list"><span class="tag gold">Informatica IDMC</span><span class="tag gold">SAP DS</span></div>
-      </div>
-
-      <div class="layer-card terracotta">
-        <h4>Log streaming</h4>
-        <p>SAP Event Mesh on BTP, or a local log-forwarding agent, can publish <code>SM20</code> audit events to a Kafka topic as they happen. Your AI scoring service consumes the topic and writes risk scores back to the SIEM within seconds. This is the architecture that gets you sub-minute detection — but it takes real infrastructure investment to run reliably.</p>
-        <div class="tag-list"><span class="tag terra">SAP Event Mesh</span><span class="tag terra">Apache Kafka</span></div>
-      </div>
-    </div>
+    <h2>Pulling the data</h2>
+    <p>Extraction isn't just about moving data; it's about doing it without breaking the system. Depending on the landscape, you might choose a slow-and-steady approach or a real-time stream.</p>
 
     <div class="latency-bar">
-      <div class="flow-diagram-title">Extraction latency spectrum</div>
+      <div class="flow-diagram-title">Technical Latency Spectrum</div>
       <div class="latency-track"></div>
-      <div class="latency-labels"><span>Low latency</span><span>High latency</span></div>
+      <div class="latency-labels"><span>Real-time</span><span>Batch-oriented</span></div>
       <div class="latency-methods">
-        <div class="latency-method"><strong>Streaming</strong>Seconds<br><small>Kafka / Event Mesh</small></div>
-        <div class="latency-method"><strong>On-demand</strong>Minutes<br><small>RFC / OData</small></div>
-        <div class="latency-method"><strong>Scheduled</strong>Hours<br><small>OData pull</small></div>
-        <div class="latency-method"><strong>Batch</strong>Daily<br><small>ETL / Informatica</small></div>
+        <div class="latency-method"><strong>Streaming</strong>Event Mesh<br><small>Instant Detection</small></div>
+        <div class="latency-method"><strong>API Pull</strong>OData / REST<br><small>Scheduled Intervals</small></div>
+        <div class="latency-method"><strong>Bulk ETL</strong>Informatica/BDS<br><small>Daily Refresh</small></div>
       </div>
     </div>
+
+    <p>For master data, a daily batch is usually fine. But for the Security Audit Log, we typically want something faster. Many modern architectures are moving toward OData services because they are easier for cloud-native tools to consume compared to traditional RFC calls.</p>
   </section>
 
-  <!-- ── PROCESSING ── -->
   <section id="processing">
     <div class="section-label">§ 04</div>
-    <h2>Data processing &amp; feature engineering</h2>
-    <p>Raw SAP data won't go straight into a model. You need a processing layer that turns it into feature vectors — and that also deals with the messy reality of SAP extracts: duplicate records from change document writes, timezone mismatches across system landscapes, sparse categorical fields in role tables. This work is unglamorous but it's where most projects quietly fail.</p>
-
-    <h3>Key engineered features</h3>
-    <div class="layer-grid">
-      <div class="layer-card">
-        <h4>Temporal features</h4>
-        <p>Transaction count per hour/day, time-of-day buckets, deviation from the user's historical activity window (e.g. first login at 03:00 when baseline is 08:00–18:00), weekend activity flags.</p>
-      </div>
-      <div class="layer-card marigold">
-        <h4>Access features</h4>
-        <p>Sensitive T-code execution frequency (<code>SE16</code>, <code>SU01</code>, <code>FB60</code>), number of distinct authorization objects accessed per session, SoD conflict score derived from role intersection analysis.</p>
-      </div>
-      <div class="layer-card terracotta">
-        <h4>Volume features</h4>
-        <p>Data records read/written per session, bulk download indicators (high record count in single transaction), comparison against peer group median (same role, same department).</p>
-      </div>
-      <div class="layer-card">
-        <h4>Graph features</h4>
-        <p>Role inheritance depth, number of directly assigned vs. inherited authorisations, centrality score in the user-role-object graph — inputs for privilege escalation path detection.</p>
-      </div>
-    </div>
+    <h2>The feature layer</h2>
+    <p>Raw SAP tables are "dirty" from a data science perspective. You can't just throw a raw <code>USR02</code> table into a model and expect magic. We have to engineer features that represent risk. For example, instead of just a timestamp, we create a feature called "Activity Outside Business Hours" or "Deviation from Peer Group Median."</p>
 
     <div class="callout">
-      <div class="callout-label">Engineering tip</div>
-      <p>Version your feature store alongside your models, and treat feature drift as a first-class concern. SAP landscapes change — new roles get added, T-codes get deprecated, custom Z-transactions come and go. A feature that was stable for a year can become noise after an upgrade. I've seen models degrade silently for weeks before anyone noticed the inputs had shifted.</p>
+      <div class="callout-label">A Professional Tip</div>
+      <p>Pay close attention to timezone normalization. SAP systems often run on UTC, while users are across the globe. If you get this wrong, your "late night login" alerts will be full of false positives from users in different regions.</p>
     </div>
   </section>
 
-  <!-- ── MODELS ── -->
   <section id="models">
     <div class="section-label">§ 05</div>
-    <h2>AI model layer</h2>
-    <p>Four model families cover the main threat categories. In practice, you don't route each model's output to the SIEM independently — that's a fast way to drown your SOC in alerts. Combine them into a unified risk score first, then forward that. The table below covers what each model type does and what it needs to get started.</p>
+    <h2>Model selection</h2>
+    <p>Not every problem needs a Neural Network. In fact, for most SAP security use cases, simpler models are often more explainable—and in a regulated audit environment, explainability is a requirement.</p>
 
     <table class="model-table">
       <thead>
         <tr>
-          <th>Model type</th>
-          <th>Algorithms</th>
-          <th>Detects</th>
-          <th>Training</th>
+          <th>Category</th>
+          <th>Typical Algo</th>
+          <th>Use Case</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Anomaly detection</td>
-          <td>Isolation Forest, Autoencoders, OCSVM</td>
-          <td>Unusual transaction patterns, off-hours access, data volume spikes</td>
-          <td>Unsupervised — no labelled data required</td>
+          <td>Unsupervised</td>
+          <td>Isolation Forest</td>
+          <td>Detecting rare transaction jumps</td>
         </tr>
         <tr>
-          <td>Risk prediction</td>
-          <td>Random Forest, XGBoost, LightGBM</td>
-          <td>High-risk user sessions, policy violations, SoD conflicts in use</td>
-          <td>Supervised — requires labelled historical incidents</td>
+          <td>Supervised</td>
+          <td>XGBoost</td>
+          <td>Predicting high-risk role changes</td>
         </tr>
         <tr>
-          <td>Sequence models</td>
-          <td>LSTM, Transformer (fine-tuned)</td>
-          <td>Multi-step attack chains, kill-chain progression, session hijacking</td>
-          <td>Semi-supervised — sequence of events as input</td>
-        </tr>
-        <tr>
-          <td>Graph models</td>
-          <td>GNN, PageRank variants, path analysis</td>
-          <td>Privilege escalation paths, role mining anomalies, dormant account abuse</td>
-          <td>Unsupervised / rule-augmented</td>
+          <td>Graph Analysis</td>
+          <td>Node2Vec</td>
+          <td>Identifying hidden SoD paths</td>
         </tr>
       </tbody>
     </table>
-
-    <p>Start with anomaly detection — no labelled data required, and you'll have findings within weeks. The supervised risk model comes later, once your security team has built up 6–12 months of investigated incidents to train on. Jumping straight to supervised learning without labelled data is one of the most common mistakes I see on these projects.</p>
   </section>
 
-  <!-- ── SIEM ── -->
   <section id="siem">
     <div class="section-label">§ 06</div>
-    <h2>SIEM integration</h2>
-    <p>The AI layer shouldn't write raw log data back to the SIEM — it should write scored, enriched events. Each one carries a risk score (0–100), a category label, the features that drove the score, and a reference to the originating SAP session or user. A SOC analyst should be able to look at the alert and know what happened without having to open a separate SAP GUI session.</p>
-
-    <div class="layer-grid">
-      <div class="layer-card">
-        <h4>Splunk</h4>
-        <p>The HTTP Event Collector (HEC) is the fastest way to get AI-scored events into Splunk. Write SPL correlation searches that join AI risk scores against your existing SAP add-on data. If you haven't already built a log ingestion pipeline, the SAP Basis add-on covers the basics and saves you a few weeks of plumbing work.</p>
-        <div class="tag-list"><span class="tag">HEC</span><span class="tag">SPL correlation</span><span class="tag">SAP add-on</span></div>
-      </div>
-      <div class="layer-card">
-        <h4>Microsoft Sentinel</h4>
-        <p>SAP maintains a certified Sentinel solution on the Content Hub — it covers <code>SM20</code>, <code>CDHDR</code>, and user master data out of the box. Add custom KQL analytic rules that reference your AI risk score field. For automated response, Logic Apps integrates natively and doesn't require a separate SOAR platform.</p>
-        <div class="tag-list"><span class="tag">Content Hub</span><span class="tag">KQL rules</span><span class="tag">Logic Apps</span></div>
-      </div>
-    </div>
-
-    <div class="callout">
-      <div class="callout-label">Integration pattern</div>
-      <p>Push AI scores as enrichment fields on your existing SAP log events, not as separate event types. If you create a new event type for every AI output, you'll end up with correlation rules that need joins at query time and a schema that nobody can maintain six months later. Keep the structure flat — one event, all the context on it.</p>
-    </div>
+    <h2>SIEM workflows</h2>
+    <p>The AI model's job isn't to fix the problem; it's to provide the SOC analyst with a "Reason for Suspicion." We integrate this by sending a JSON payload to the SIEM—like Sentinel or Splunk—containing the User ID, the Risk Score, and a short summary of the anomaly.</p>
   </section>
 
-  <!-- ── RESPONSE ── -->
   <section id="response">
     <div class="section-label">§ 07</div>
-    <h2>Action &amp; response layer</h2>
-    <p>This is where most SAP security programs get stuck. You've built the detection. You have a risk score. And then nothing happens for four hours because the alert is sitting in a queue waiting for a human to look at it. By then the session is long over. Design response workflows before you go live, not after the first real incident.</p>
+    <h2>Response strategies</h2>
+    <p>When the AI detects something, the response needs to be proportional. We categorize these into two buckets: actions that happen automatically and those that need a human eyes-on check.</p>
 
     <div class="action-split">
       <div class="action-col manual">
-        <h4>Manual response</h4>
+        <h4>Human Intervention</h4>
         <ul class="action-list">
-          <li>Security investigation triggered in GRC</li>
-          <li>Access review pushed to user's manager</li>
-          <li>Audit report generated for compliance record</li>
-          <li>Session reconstruction from <code>STAD</code> data</li>
-          <li>Escalation to SAP Basis for technical remediation</li>
+          <li>Manager review of activity</li>
+          <li>Manual account lock for VIPs</li>
+          <li>Detailed forensic deep-dive</li>
         </ul>
       </div>
       <div class="action-col auto">
-        <h4>Automated response</h4>
+        <h4>Automated "Guardrails"</h4>
         <ul class="action-list">
-          <li>Account locked via <code>SUIM</code>/<code>SU01</code> RFC call</li>
-          <li>Sensitive role removed from user assignment</li>
-          <li>Approval workflow triggered in SAP GRC Access Control</li>
-          <li>Alert pushed to security on-call channel</li>
-          <li>Correlated ticket auto-created in ITSM platform</li>
+          <li>Revoking "Emergency" access</li>
+          <li>Triggering MFA re-auth</li>
+          <li>Isolating specific RFC users</li>
         </ul>
       </div>
     </div>
-
-    <p>A useful rule of thumb: automate the high-confidence, low-blast-radius actions first. Locking a dormant account that activates at 02:00 from an unfamiliar IP is a safe candidate. Pulling a role from an active user who's mid-session is not — that one needs a human in the loop, every time.</p>
   </section>
 
-  <!-- ── ARCHITECTURE ── -->
   <section id="architecture">
     <div class="section-label">§ 08</div>
-    <h2>Batch vs. streaming architecture</h2>
-    <p>People ask which one to build as if it's a choice. It usually isn't — you'll end up running both. The real question is which one to start with, and for what.</p>
-
-    <div class="layer-grid">
-      <div class="layer-card marigold">
-        <h4>Batch processing (most common)</h4>
-        <p>A nightly or hourly ETL job pulls the prior period's <code>STAD</code>, <code>CDHDR</code>, and role data, builds features, runs the models, and loads scores back into the SIEM. Simple to operate. Easy to debug when something breaks. Sufficient for SoD conflict analysis, access certification campaigns, and compliance reporting.</p>
-        <p>The downside is obvious: if something happens at 09:00, you might not see it until 06:00 the following morning.</p>
-      </div>
-      <div class="layer-card terracotta">
-        <h4>Streaming (advanced)</h4>
-        <p><code>SM20</code> events forward to a Kafka topic via SAP Event Mesh or a log agent. A stream processor — Flink, Spark Streaming — runs lightweight anomaly detection and writes scored events back to the SIEM within seconds. Sub-minute detection latency is genuinely achievable here.</p>
-        <p>It's also a lot more infrastructure to run. Schema evolution, stateful processing, consumer lag monitoring — these aren't problems the batch path has. Go in with clear eyes.</p>
-      </div>
-    </div>
-
-    <div class="callout">
-      <div class="callout-label">Where to start</div>
-      <p>Build the batch pipeline first. It handles 80% of the security value for a fraction of the operational overhead. And when you're ready to add streaming, you don't rebuild — you reuse the same feature definitions and model artifacts. You're just changing how the data gets there.</p>
-    </div>
+    <h2>Closing thoughts</h2>
+    <p>Securing an SAP landscape with AI is a journey of data quality. It is better to have one reliable model running on a nightly batch than a complex real-time system that produces too much noise. Start with the most critical logs, build trust with the Basis team, and expand the architecture as the data matures.</p>
   </section>
 
 </div>
 
-<!-- ══════════════════════════════════════════════════════ FOOTER -->
 <footer>
-  <strong>Sahar Guermah</strong> — SAP Security<br>
-  AI Integration with SAP Security · Architecture Reference
+  <p>© 2026 Technical Publication by <strong>Sahar Guermah</strong></p>
+  <p style="margin-top: 8px; opacity: 0.7;">Authored for the SAP Security & AI Research Community</p>
 </footer>
 
 </body>
