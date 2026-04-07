@@ -488,13 +488,12 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <div class="hero-tag">Comparative Evaluation</div>
+    <div class="hero-tag">Launching Comparative Evaluation</div>
     <h1>Practical AI Integration for SAP Security</h1>
-    <p class="hero-sub">It is a reality that SAP systems produce more security data than most Basis teams can realistically handle. This guide shows how to bridge that gap using a modern data pipeline.</p>
+    <p class="hero-sub">SAP landscapes generate more security data than most Basis teams can realistically handle. This guide shows how to bridge that gap by using a modern, scalable data pipeline.</p>
     <div class="hero-meta">
       <div>Author <span>Sahar Guermah</span></div>
-      <div>Role <span>Security Architect</span></div>
-      <div>Read time <span>~12 min</span></div>
+      <div> <span>Security Architect</span></div?
     </div>
   </div>
 </header>
@@ -504,50 +503,50 @@
   <nav class="toc">
     <div class="toc-title">Guide Navigation</div>
     <ol>
-      <li><a href="#overview">Architecture mindset</a></li>
-      <li><a href="#data-sources">Where logs live</a></li>
-      <li><a href="#extraction">Pulling the data</a></li>
-      <li><a href="#processing">The feature layer</a></li>
-      <li><a href="#models">Model selection</a></li>
-      <li><a href="#siem">SIEM workflows</a></li>
-      <li><a href="#response">Response strategies</a></li>
-      <li><a href="#architecture">Closing thoughts</a></li>
+      <li><a href="#overview">Architecture Mindset</a></li>
+      <li><a href="#data-sources">Where Logs Live</a></li>
+      <li><a href="#extraction">Pulling the Data</a></li>
+      <li><a href="#processing">The Feature Layer</a></li>
+      <li><a href="#models">Model Selection</a></li>
+      <li><a href="#siem">SIEM Workflows</a></li>
+      <li><a href="#response">Response Strategies</a></li>
+      <li><a href="#architecture">Batch vs. Streaming</a></li>
     </ol>
   </nav>
 
   <section id="overview">
     <div class="section-label">§ 01</div>
-    <h2>Architecture mindset</h2>
-    <p>The core philosophy here is quite simple: <strong>SAP is the source of truth, but not the place for heavy analytics.</strong> Trying to run intensive machine learning inside the ABAP stack is typically a bad idea for performance reasons. Instead, we extract that data to a specialized environment—a data lake or a cloud ML platform—and only send the high-value risk scores back into the security ecosystem.</p>
+    <h2>Architecture Mindset</h2>
+    <p>The core philosophy here is quite simple. <strong>SAP is the source of truth, but not the place for heavy analytics.</strong> Trying to run intensive machine learning inside the ABAP stack is typically a bad idea because of performance risks. Instead, we extract that data to a specialized environment, perhaps a data lake or a cloud ML platform. The high-value risk scores are then the only things that need to go back into the security ecosystem.</p>
     
-    <p>In my view, the benefit of this modular approach is that it respects the stability of the SAP core while allowing the security team to use modern tools like Python or Spark. This is how you reduce the MTTD without making the Basis team nervous about system resources.</p>
+    <p>In my view, the benefit of this modular approach is how it respects the stability of the SAP core while allowing the security team to utilize modern tools. This is how you reduce the MTTD without making the Basis team nervous about system resources.</p>
 
     <div class="flow-diagram">
-      <div class="flow-diagram-title">Conceptual Architecture Flow</div>
+      <div class="flow-diagram-title">End-to-End Conceptual Flow</div>
       <div class="flow-nodes">
         <div class="flow-node node-sap">
-          <div class="flow-node-title">SAP Core Layer</div>
-          <div class="flow-node-sub">Logs (Audit, Workload, Changes)</div>
+          <div class=\"flow-node-title\">SAP Core Layer</div>
+          <div class=\"flow-node-sub\">Logs (Audit, Workload, Changes)</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-ext">
-          <div class="flow-node-title">Extraction Pipeline</div>
-          <div class="flow-node-sub">OData, RFC, or Event Mesh</div>
+          <div class=\"flow-node-title\">Extraction Pipeline</div>
+          <div class=\"flow-node-sub\">OData, RFC, or Event Mesh</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-proc">
-          <div class="flow-node-title">Feature Engineering</div>
-          <div class="flow-node-sub">Normalization & Data Cleansing</div>
+          <div class=\"flow-node-title\">Feature Engineering</div>
+          <div class=\"flow-node-sub\">Normalization & Data Cleansing</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-ai">
-          <div class="flow-node-title">AI & ML Models</div>
-          <div class="flow-node-sub">Anomaly Scoring & Risk Prediction</div>
+          <div class=\"flow-node-title\">AI & ML Models</div>
+          <div class=\"flow-node-sub\">Anomaly Scoring & Risk Prediction</div>
         </div>
         <div class="flow-arrow"><div class="flow-arrow-line"></div><div class="flow-arrow-head">▼</div></div>
         <div class="flow-node node-siem">
-          <div class="flow-node-title">Incident Management</div>
-          <div class="flow-node-sub">SIEM / SOC Integration</div>
+          <div class=\"flow-node-title\">Incident Management</div>
+          <div class=\"flow-node-sub\">SIEM / SOC Integration</div>
         </div>
       </div>
     </div>
@@ -555,12 +554,12 @@
 
   <section id="data-sources">
     <div class="section-label">§ 02</div>
-    <h2>Where logs live</h2>
+    <h2>Where Logs Live</h2>
     <p>Finding the right signal is usually half the battle. In the SAP universe, we look at four key areas that provide the richest context for security models.</p>
 
     <div class="layer-grid">
       <div class="layer-card">
-        <h4>User behavior (STAD)</h4>
+        <h4>User Behavior (STAD)</h4>
         <p>The workload tables, <code>STAD</code> and <code>ST03N</code>, are essentially the fingerprints of activity. They record what T-codes were used and by whom. Establishing a "normal" baseline here is what makes anomaly detection actually work.</p>
         <div class="tag-list">
           <span class="tag">Behavioral Logs</span><span class="tag">Transaction History</span>
@@ -577,7 +576,7 @@
 
       <div class="layer-card marigold">
         <h4>Access Metadata</h4>
-        <p>The <code>USR*</code> and <code>AGR*</code> family of tables tell the story of "who can do what." We pull these to understand the authorization graph, which is vital for detecting if a user suddenly gains permissions they shouldn't have.</p>
+        <p>The <code>USR*</code> and <code>AGR*</code> family of tables tell the story of "who can do what." We pull these to understand the authorization graph. This is vital for detecting if a user suddenly gains permissions they shouldn't have.</p>
         <div class="tag-list">
           <span class="tag gold">Roles & Profiles</span><span class="tag gold">SoD Analysis</span>
         </div>
@@ -585,7 +584,7 @@
 
       <div class="layer-card">
         <h4>The Security Log (SM20)</h4>
-        <p>This is the classic audit log. It captures failed login attempts and sensitive RFC calls. One must remember to verify that the audit classes are actually turned on in <code>SM19</code>, otherwise, the model will be looking at an empty table.</p>
+        <p>This is the classic audit log. It captures failed login attempts and sensitive RFC calls. One must remember to verify that the audit classes are actually turned on in <code>SM19</code>, otherwise the model will be looking at an empty table.</p>
         <div class="tag-list">
           <span class="tag">Security Audit Log</span><span class="tag">Brute Force Signaling</span>
         </div>
@@ -595,8 +594,8 @@
 
   <section id="extraction">
     <div class="section-label">§ 03</div>
-    <h2>Pulling the data</h2>
-    <p>Extraction isn't just about moving data; it's about doing it without breaking the system. Depending on the landscape, you might choose a slow-and-steady approach or a real-time stream.</p>
+    <h2>Pulling the Data</h2>
+    <p>Extraction isn't just about moving data. It's about doing it without breaking the system. Depending on the landscape, you might choose a slow-and-steady approach or a real-time stream.</p>
 
     <div class="latency-bar">
       <div class="flow-diagram-title">Technical Latency Spectrum</div>
@@ -608,14 +607,12 @@
         <div class="latency-method"><strong>Bulk ETL</strong>Informatica/BDS<br><small>Daily Refresh</small></div>
       </div>
     </div>
-
-    <p>For master data, a daily batch is usually fine. But for the Security Audit Log, we typically want something faster. Many modern architectures are moving toward OData services because they are easier for cloud-native tools to consume compared to traditional RFC calls.</p>
   </section>
 
   <section id="processing">
     <div class="section-label">§ 04</div>
-    <h2>The feature layer</h2>
-    <p>Raw SAP tables are "dirty" from a data science perspective. You can't just throw a raw <code>USR02</code> table into a model and expect magic. We have to engineer features that represent risk. For example, instead of just a timestamp, we create a feature called "Activity Outside Business Hours" or "Deviation from Peer Group Median."</p>
+    <h2>The Feature Layer</h2>
+    <p>Raw SAP tables are "dirty" from a data science perspective. You cannot just throw a raw <code>USR02</code> table into a model and expect magic. We have to engineer features that represent risk. Instead of just a timestamp, we create a feature called "Activity Outside Business Hours" or "Deviation from Peer Group Median."</p>
 
     <div class="callout">
       <div class="callout-label">A Professional Tip</div>
@@ -625,8 +622,8 @@
 
   <section id="models">
     <div class="section-label">§ 05</div>
-    <h2>Model selection</h2>
-    <p>Not every problem needs a Neural Network. In fact, for most SAP security use cases, simpler models are often more explainable—and in a regulated audit environment, explainability is a requirement.</p>
+    <h2>Model Selection</h2>
+    <p>Not every problem needs a Neural Network. In fact, for most SAP security use cases, simpler models are often more explainable. In a regulated audit environment, explainability is a requirement.</p>
 
     <table class="model-table">
       <thead>
@@ -658,13 +655,13 @@
 
   <section id="siem">
     <div class="section-label">§ 06</div>
-    <h2>SIEM workflows</h2>
-    <p>The AI model's job isn't to fix the problem; it's to provide the SOC analyst with a "Reason for Suspicion." We integrate this by sending a JSON payload to the SIEM—like Sentinel or Splunk—containing the User ID, the Risk Score, and a short summary of the anomaly.</p>
+    <h2>SIEM Workflows</h2>
+    <p>The AI model's job isn't to fix the problem. It is to provide the SOC analyst with a "Reason for Suspicion." We integrate this by sending a JSON payload to the SIEM, like Sentinel or Splunk. This payload contains the User ID, the Risk Score, and a short summary of the anomaly.</p>
   </section>
 
   <section id="response">
     <div class="section-label">§ 07</div>
-    <h2>Response strategies</h2>
+    <h2>Response Strategies</h2>
     <p>When the AI detects something, the response needs to be proportional. We categorize these into two buckets: actions that happen automatically and those that need a human eyes-on check.</p>
 
     <div class="action-split">
@@ -677,9 +674,9 @@
         </ul>
       </div>
       <div class="action-col auto">
-        <h4>Automated "Guardrails"</h4>
+        <h4>Automated Guardrails</h4>
         <ul class="action-list">
-          <li>Revoking "Emergency" access</li>
+          <li>Revoking Emergency access</li>
           <li>Triggering MFA re-auth</li>
           <li>Isolating specific RFC users</li>
         </ul>
@@ -689,15 +686,33 @@
 
   <section id="architecture">
     <div class="section-label">§ 08</div>
-    <h2>Closing thoughts</h2>
-    <p>Securing an SAP landscape with AI is a journey of data quality. It is better to have one reliable model running on a nightly batch than a complex real-time system that produces too much noise. Start with the most critical logs, build trust with the Basis team, and expand the architecture as the data matures.</p>
+    <h2>Batch vs. Streaming</h2>
+    <p>Most architectures are built on a compromise between speed and cost. This is why we distinguish between two main tracks.</p>
+
+    <div class="layer-grid">
+      <div class="layer-card">
+        <h4>Batch (standard)</h4>
+        <p>This involves pulling data via ETL or OData every 24 hours. It is cheap to operate and easy to debug when something breaks. It is usually sufficient for SoD conflict analysis, access certification campaigns, and compliance reporting.</p>
+        <p>The downside is obvious. If something happens at 09:00, you might not see it until 06:00 the following morning.</p>
+      </div>
+      <div class="layer-card terracotta">
+        <h4>Streaming (advanced)</h4>
+        <p><code>SM20</code> events forward to a Kafka topic via SAP Event Mesh or a log agent. A stream processor, like Flink or Spark Streaming, runs lightweight anomaly detection and writes scored events back to the SIEM within seconds. Sub-minute detection latency is genuinely achievable here.</p>
+        <p>It is also a lot more infrastructure to run. Schema evolution, stateful processing, consumer lag monitoring. These are not problems the batch path has. Go in with clear eyes.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Where to start</div>
+      <p>Build the batch pipeline first. It handles 80% of the security value for a fraction of the operational overhead. And when you are ready to add streaming, you do not rebuild. You reuse the same feature definitions and model artifacts. You are just changing how the data gets there.</p>
+    </div>
   </section>
 
 </div>
 
 <footer>
-  <p>© 2026 Technical Publication by <strong>Sahar Guermah</strong></p>
-  <p style="margin-top: 8px; opacity: 0.7;">Authored for the SAP Security & AI Research Community</p>
+  <strong>Sahar Guermah</strong> — SAP Security Architect<br>
+  AI Integration with SAP Security · Architecture Reference 2026
 </footer>
 
 </body>
